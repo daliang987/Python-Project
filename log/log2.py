@@ -53,6 +53,7 @@ def splitfile(fromfile, todir, msize=50):
 
 
 def get_keyword(keyword, line,ignorecase,exclude):
+	line1=None
 
     if ignorecase:
         line1=line.lower()
