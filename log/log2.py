@@ -16,7 +16,7 @@ def usage():
     print "  -d	--d		set the log dir "
     print "  -o	--output	set the result file path"
     print "  -k	--keyword 	find the keyword in the log. example: -k \"post 200\" or -k \"or main.jsp login.jsp\""
-    print "  -e	--exclude 	find the keyword exclude the word"
+    print "  -e	--exclude 	find the log exclude the keyword"
     print "  -s	--split  	split the log file with MB size  example:-s 'logfile.log 50'"
     print "  -v	--verbose	show the result in the console"
     print "  -h	--help		show this help"

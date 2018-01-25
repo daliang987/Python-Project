@@ -1,0 +1,51 @@
+﻿1. 环境安装
+使用前必须安装python环境。
+
+安装之后查看系统是否有python执行环境。
+C:\Users\Administrator\Desktop>python --version
+Python 2.7.14
+
+如果没有，需要设置环境变量
+
+2. 工具使用方法
+python testsoap.py
+
+-u --url	wcm的url地址
+-f --file	文件名称，文件内容格式应该为wcm的访问地址列表
+-o --output	结果保存文件名称
+
+3. 结果分析
+
+结果输出如下：
+
+http://192.168.51.63:8080/wcm/services/trswcm:UploadService
+---------------------------------------------
+|uploadFile                     |    danger |
+---------------------------------------------
+|sendFileBase64                 |    danger |
+---------------------------------------------
+
+
+http://192.168.51.63:8080/wcm/services/trswcm:UploadService
+存在两个方法，一个为uploadFile，一个为sendFileBase64
+此两个方法验证均可被调用，说明UploadService没有进行IP白名单加固，那么后面输出结果为danger
+
+
+http://192.168.51.63:8080/wcm/services/trswcm:ImportService
+---------------------------------------------
+|importDocuments                |      safe |
+---------------------------------------------
+
+http://192.168.51.63:8080/wcm/services/trswcm:ImportService
+存在一个方法，为importDocuments
+因为ImportService 已经进行过IP加固，那么importDocuments方法无法调用，则输出结果为safe
+
+http://192.168.51.63:8080/wcm/services/trswcm:MetaDataImportService
+---------------------------------------------
+<h2>AXIS error</h2>
+<p>Could not generate WSDL!</p>
+<p>There is no SOAP service at this location</p>
+
+上述结果说明此版本WCM的soap服务中不存在MetaDataImportService，其他错误结果也会一样会输出到对应请求服务的下面。
+
+
