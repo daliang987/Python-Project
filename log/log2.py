@@ -15,9 +15,9 @@ def usage():
     print "  -f	--file		set the log file "
     print "  -d	--d		set the log dir "
     print "  -o	--output	set the result file path"
-    print "  -k	--keyword 	find the keyword in the log. example: -k \"post 200\" or -k \"or main.jsp login.jsp\""
+    print "  -k	--keyword 	find the keyword in the log. example: -k \"post 200\" or -k \"|| main.jsp login.jsp\""
     print "  -e	--exclude 	find the log exclude the keyword"
-    print "  -s	--split  	split the log file with MB size  example:-s 'logfile.log 50'"
+    print "  -s	--split  	split the log file with MB size  example:-s 'logdir 50'"
     print "  -v	--verbose	show the result in the console"
     print "  -h	--help		show this help"
     print
@@ -53,7 +53,8 @@ def splitfile(fromfile, todir, msize=50):
 
 
 def get_keyword(keyword, line,ignorecase,exclude):
-	line1=None
+
+    line1=line
 
     if ignorecase:
         line1=line.lower()
@@ -65,19 +66,16 @@ def get_keyword(keyword, line,ignorecase,exclude):
         for e in excludes:
             if line1.find(e)>=0:
                 return None
-            else:
-                if keyword is None:
-                    return line
 
     if keyword:
         keywords = keyword.split(' ')
         # print keywords
         andflag = True
-        if keywords[0] == 'or':
+        if keywords[0] == '||':
             for k in keywords[1:]:
                 if line1.find(k)>=0:
                     return line
-                    break
+
         else:
             for k in keywords:
                 if line1.find(k)<0:
