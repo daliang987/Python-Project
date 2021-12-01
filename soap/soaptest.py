@@ -31,7 +31,13 @@ def getSoap(url_str, service):
         url = urlparse(url_str)
         host = url.hostname
         port = url.port
-        conn = httplib.HTTPConnection(host, port, timeout=5)
+
+        if url.scheme == "http":
+            conn = httplib.HTTPConnection(host, port if port else 80, timeout=5)
+        else:
+            conn = httplib.HTTPSConnection(
+                host, port if port else 443, timeout=5)
+
         conn.request('GET', '/wcm/services/%s?wsdl' % service)
         resp = conn.getresponse()
         # print resp.status
@@ -61,27 +67,32 @@ def formatSoap(xmltext):
         DOMTree = xml.dom.minidom.parseString(xmltext)
         wsdl_definitionsion = DOMTree.documentElement
         # if wsdl_definitionsion.hasAttribute("targetNamespace"):
-            # print "SOAP NAME : %s" % wsdl_definitionsion.getAttribute("targetNamespace")
+        # print "SOAP NAME : %s" % wsdl_definitionsion.getAttribute("targetNamespace")
 
         messages = wsdl_definitionsion.getElementsByTagName("wsdl:message")
 
         for soapmethod in messages:
-            if soapmethod.hasAttribute("name") and soapmethod.getAttribute('name').endswith('Request'):
+            if soapmethod.hasAttribute("name") and soapmethod.getAttribute(
+                    'name').endswith('Request'):
                 methodname = soapmethod.getAttribute("name")
                 soapstr = '''<soapenv:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:impl="http://impl.service.trs.com">\n<soapenv:Header/>\n<soapenv:Body>\n'''
 
                 if methodname:
-                    soapstr += '<impl:%s soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">\n' % soapmethod.getAttribute('name')[
-                                                                                                                                         0:-7]
+                    soapstr += '<impl:%s soapenv:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">\n' % soapmethod.getAttribute(
+                        'name')[0:-7]
 
                 parts = soapmethod.getElementsByTagName('wsdl:part')
 
                 for part in parts:
                     if part.hasAttribute('name') and part.hasAttribute('type'):
                         soapstr += '<%s xsi:type="%s" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/">%s</%s>\n' % (
-                            part.getAttribute('name'), part.getAttribute('type'), setValue(part.getAttribute('type')), part.getAttribute('name'))
+                            part.getAttribute('name'),
+                            part.getAttribute('type'),
+                            setValue(part.getAttribute('type')),
+                            part.getAttribute('name'))
 
-                soapstr += "</impl:%s>\n" % soapmethod.getAttribute('name')[0:-7]
+                soapstr += "</impl:%s>\n" % soapmethod.getAttribute(
+                    'name')[0:-7]
                 soapstr += "</soapenv:Body>\n"
                 soapstr += "</soapenv:Envelope>"
 
@@ -97,12 +108,19 @@ def SoapServiceTest(url_str, service, reqstr):
         url = urlparse(url_str)
         host = url.hostname
         port = url.port
-        conn = httplib.HTTPConnection(host, port, timeout=5)
-        conn.request('POST', '/wcm/services/%s' %
-                     service, reqstr, headers={'SOAPAction': '""'})
+        if url.scheme == "http":
+            conn = httplib.HTTPConnection(host, port if port else 80, timeout=5)
+        else:
+            conn = httplib.HTTPSConnection(
+                host, port if port else 443, timeout=5)
+        conn.request(
+            'POST',
+            '/wcm/services/%s' % service,
+            reqstr,
+            headers={'SOAPAction': '""'})
         resp = conn.getresponse()
         # print resp.status
-
+        # print resp.read()
         if resp.status != 401:
             return 'danger'
         else:
@@ -129,9 +147,13 @@ if __name__ == "__main__":
         if name in ("-o", "--output"):
             output = value
 
-    services = ['trswcm:UploadService', 'trswcm:ImportService', 'trswcm:GetChannelInfoService',
-    'trswcm:GetSOAPInfoService', 'trswcm:SOAPService', 'trswcm:InfoViewService',
-    'trswcm:EPressImporte', 'trswcm:ImportServiceViaFtp', 'trswcm:WCMOnlineService', 'urn:FileService', 'trswcm:MetaDataImportService']
+    services = [
+        'trswcm:UploadService', 'trswcm:ImportService',
+        'trswcm:GetChannelInfoService', 'trswcm:GetSOAPInfoService',
+        'trswcm:SOAPService', 'trswcm:InfoViewService', 'trswcm:EPressImporte',
+        'trswcm:ImportServiceViaFtp', 'trswcm:WCMOnlineService',
+        'urn:FileService', 'trswcm:MetaDataImportService'
+    ]
 
     try:
         for url_str in all_url:
@@ -139,22 +161,43 @@ if __name__ == "__main__":
             url = urlparse(url_str)
             for service in services:
                 print
-                print '%s://%s%s/wcm/services/%s' % (url.scheme, url.hostname, ':' + str(url.port) if url.port else ':80', service)
+                if url.scheme == "http":
+                    print '%s://%s%s/wcm/services/%s' % (
+                        url.scheme, url.hostname,
+                        ':' + str(url.port) if url.port else ':80', service)
+                else:
+                    print '%s://%s%s/wcm/services/%s' % (
+                        url.scheme, url.hostname,
+                        ':' + str(url.port) if url.port else ':443', service)
+
                 print '-' * 45
                 if output:
-                    outputtxt(output, '\n%s://%s%s/wcm/services/%s\n' % (url.scheme, url.hostname, ':' + str(url.port) if url.port else ':80', service))
+                    if url.sheme == "http":
+                        outputtxt(
+                            output, '\n%s://%s%s/wcm/services/%s\n' %
+                            (url.scheme, url.hostname, ':' +
+                             str(url.port) if url.port else ':80', service))
+                    else:
+                        outputtxt(
+                            output, '\n%s://%s%s/wcm/services/%s\n' %
+                            (url.scheme, url.hostname, ':' +
+                             str(url.port) if url.port else ':443', service))
                     outputtxt(output, '-' * 45 + '\n')
 
-                xmltext=getSoap(url_str, service)
+                xmltext = getSoap(url_str, service)
                 if xmltext.find('wsdl:definitions') > 0:
-                    reqtext=formatSoap(xmltext)
+                    reqtext = formatSoap(xmltext)
                     for methodname, txt in reqtext.items():
                         # print txt
-                        print '|%-30s |%10s |' % (methodname[0:-7], SoapServiceTest(url_str, service, txt))
+                        print '|%-30s |%10s |' % (methodname[0:-7],
+                                                  SoapServiceTest(
+                                                      url_str, service, txt))
                         print '-' * 45
                         if output:
-                            outputtxt(output, '|%-30s |%10s |\n' %
-                                      (methodname[0:-7], SoapServiceTest(url_str, service, txt)))
+                            outputtxt(
+                                output, '|%-30s |%10s |\n' %
+                                (methodname[0:-7],
+                                 SoapServiceTest(url_str, service, txt)))
                             outputtxt(output, '-' * 45 + '\n')
                 else:
                     print xmltext
